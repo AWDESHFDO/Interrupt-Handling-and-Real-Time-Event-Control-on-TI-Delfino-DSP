@@ -1,1 +1,96 @@
-
+#include "F28x_Project.h"     // Device Headerfile and Examples Include File 
+interrupt void xint1_isr(void);  //Declare the subroutine xint1_isr 
+void main(void) 
+{ 
+InitPieVectTable();                 
+//Initialise PIE Vector Table 
+InitPieCtrl();     
+//Initialise PIE Control Registers 
+EALLOW;      
+//Enable access to protected registers 
+PieVectTable.XINT1_INT = &xint1_isr;            
+//Address of the sub-routine is saved in  
+the vector table 
+EDIS;       
+IER = 0x0000;   
+IFR = 0x0000;  
+EALLOW;    
+//Disable access to protected registers 
+//Clear the interrupt enable register  
+//Clear the interrupt enable register  
+//Enable access to protected registers 
+GpioCtrlRegs.GPBGMUX1.bit.GPIO34 = 0; 
+GpioCtrlRegs.GPBMUX1.bit.GPIO34 = 0; 
+GpioCtrlRegs.GPBDIR.bit.GPIO34 = 1;  
+GpioCtrlRegs.GPAGMUX2.bit.GPIO17 = 0;  
+GpioCtrlRegs.GPAMUX2.bit.GPIO17 = 0; 
+GpioCtrlRegs.GPADIR.bit.GPIO17 = 0;  
+GpioCtrlRegs.GPAINV.bit.GPIO17 = 1;  
+GpioCtrlRegs.GPAQSEL2.bit.GPIO17 = 1; 
+//Decides that the GPIO34 works as  
+GPIO 
+//GPIO34 acts as output 
+//Decides that the GPIO17 works as  
+GPIO 
+//GPIO17 acts as input 
+//Inverts GPIO17 logic 
+// XINT1 qualification set to 3  
+samples 
+GpioCtrlRegs.GPACTRL.bit.QUALPRD2 = 255;  // Sampling period =  
+510*SYSCLKOUT 
+GPIO_SetupXINT1Gpio(17);   
+XintRegs.XINT1CR.bit.POLARITY = 1;  
+XintRegs.XINT1CR.bit.ENABLE = 1;   
+EDIS;        
+PieCtrlRegs.PIEIER1.bit.INTx4 = 1;    
+PieCtrlRegs.PIECTRL.bit.ENPIE = 1;   
+IER |= M_INT1;     
+EINT;      
+// XINT1 should be GPIO17 
+// Rising edge interrupt 
+// Enable XINT1 
+//Disable access to protected   
+registers 
+//Enable PIE Group1 INT4 
+//Enable the PIE block 
+// Enable CPU INT1 includes Xint1  
+//Enable global interrupt mask INTM 
+//Interrupt service routine 
+interrupt void xint1_isr(void)   
+{ 
+GpioDataRegs.GPBTOGGLE.bit.GPIO34 = 1;   //Toggle GPIO34 
+PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;  //Acknowledge bit PIEACK for all  
+groups 
+} 
+2) TASK 2: Internal Interrupt 
+To the above code, we add the following lines of code 
+interrupt void cpu_timer0_isr(void);  
+//Declare the subroutine cpu_timer0_isr 
+GpioCtrlRegs.GPBGMUX1.bit.GPIO41 = 0; 
+GpioCtrlRegs.GPBMUX1.bit.GPIO41 = 0;     
+GpioCtrlRegs.GPBDIR.bit.GPIO41 = 1;     
+GpioCtrlRegs.GPBINV.bit.GPIO41 = 1;     
+EALLOW;          
+CpuTimer0Regs.TCR.bit.TSS=1; 
+CpuTimer0Regs.TPR.bit.TDDR = 160; 
+CpuTimer0Regs.PRD.all = 10000000; 
+CpuTimer0Regs.TCR.bit.TRB = 1; 
+CpuTimer0Regs.TCR.bit.TIE = 1; 
+CpuTimer0Regs.TCR.bit.TSS = 0; 
+EDIS;            
+interrupt void cpu_timer0_isr(void)        
+{ 
+GpioDataRegs.GPBSET.bit.GPIO41 = 1;        
+DELAY_US(3000000);          
+//Decides that the GPIO41 works as  
+GPIO 
+//GPIO41 acts as output 
+//Inverts GPIO17 logic 
+//Enable access to protected registers 
+//Disable access to protected   
+registers 
+//Interrupt service routine 
+//Set GPIO41 
+//Delay by 30s 
+GpioDataRegs.GPBCLEAR.bit.GPIO41 = 1;   //Clear GPIO41 
+PieCtrlRegs.PIEACK.all = PIEACK_GROUP1; //Acknowledge all bits in the group1 
